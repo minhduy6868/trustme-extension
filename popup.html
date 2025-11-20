@@ -1,21 +1,59 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>TrustMe Checker</title>
-  <style>
-    body { font-family: Arial; min-width: 250px; padding: 10px; }
-    #score { font-size: 2em; color: #007bff; }
-    #checkBtn { margin-top: 10px; }
-  </style>
-</head>
-<body>
-  <h3>Kiểm tra độ tin cậy bài viết</h3>
-  <button id="checkBtn">Phân tích & Đánh giá</button>
-  <div id="score"></div>
-  <div id="raw" style="font-size:small;word-break:break-all;"></div>
-  <style>
-    body, button, h3, #score { font-family: Arial, Helvetica, "Segoe UI", "Tahoma", "Geneva", "Verdana", sans-serif; }
-  </style>
-  <script src="popup.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>TrustMe Checker</title>
+    <style>
+      body {
+        font-family: Arial;
+        min-width: 280px;
+        padding: 12px;
+      }
+      #checkBtn {
+        margin-top: 10px;
+        width: 100%;
+        padding: 8px;
+        background: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      #checkBtn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      #jsonOutput {
+        margin-top: 12px;
+        font-size: 12px;
+        white-space: pre-wrap;
+        background: #f8f9fa;
+        border: 1px solid #e1e1e1;
+        border-radius: 6px;
+        padding: 8px;
+        max-height: 260px;
+        overflow: auto;
+      }
+      #status {
+        margin-top: 10px;
+        font-size: 13px;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Quét dữ liệu bài viết</h3>
+    <button id="checkBtn">Thu thập dữ liệu</button>
+    <div id="status"></div>
+    <pre id="jsonOutput"></pre>
+    <style>
+      body,
+      button,
+      h3 {
+        font-family: Arial, Helvetica, "Segoe UI", "Tahoma", "Geneva", "Verdana",
+          sans-serif;
+      }
+    </style>
+    <script src="popup.js"></script>
+  </body>
 </html>

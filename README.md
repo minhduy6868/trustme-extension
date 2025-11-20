@@ -1,18 +1,17 @@
 # TrustMe Chrome Extension
 
-Browser extension for real-time fake news detection.
+Browser extension for quickly extracting structured article/post data.
 
 ## Purpose
 
-Allows users to verify news articles and social media posts directly in their browser with one click.
+Allows users to capture metadata and main content from news articles and social media posts with one click.
 
 ## Features
 
-- One-click verification
-- Real-time fact-checking
-- Trust score display (0-100)
-- Detailed analysis breakdown
-- Special warning for donation scam posts
+- One-click data extraction
+- Structured JSON output (URL, title, contents, article, created_at)
+- Floating widget with quick copy-to-clipboard
+- Heuristics for news sites and social platforms (Facebook, X/Twitter, Instagram)
 - Support for multiple platforms:
   - Facebook posts
   - News articles
@@ -29,52 +28,34 @@ Allows users to verify news articles and social media posts directly in their br
 4. Select the `trustme-extension/` folder
 5. Extension icon appears in toolbar
 
-### Configuration (optional):
-
-Create `.env` file:
-```
-MODEL_API_URL=http://localhost:8001
-```
-
-Default: `http://localhost:8001`
-
 ## Usage
 
 1. Open any news article or social media post
 2. Click TrustMe extension icon in toolbar
-3. Click "Kiểm tra tin tức" (Check News)
-4. Wait 10-30 seconds for results
-5. View trust score and detailed analysis
+3. Click "Thu thập dữ liệu"
+4. View JSON payload (copy or export as needed)
 
 ## How It Works
 
 ```
-User clicks "Check" button
+User clicks "Thu thập dữ liệu" button
     ↓
-Extension extracts page content (content.js)
+Extension asks content.js for structured data
     ↓
-Sends to Model API via background.js
+content.js collects title, body text, social post content, published date
     ↓
-Model API crawls related articles
+background.js forwards message responses
     ↓
-AI analysis (7 detection methods)
-    ↓
-Results polled every 2s
-    ↓
-Display in popup.js:
-  - Trust score with color coding
-  - Verdict (Verified / Needs Review / Likely False / Donation Scam)
-  - Detailed explanation
-  - Warning box for donation posts
+popup.js renders JSON with copy-friendly formatting
 ```
 
 ## Files
 
 - `manifest.json` - Extension configuration
-- `content.js` - Extract content from web pages
-- `background.js` - Communication with Model API
+- `content.js` - Extract structured data from pages
+- `background.js` - Route extraction requests between popup and content script
 - `popup.html` - UI layout
-- `popup.js` - UI logic and display
+- `popup.js` - UI logic and JSON display
 - `icons/` - Extension icons
 
 ## Content Extraction
@@ -82,62 +63,40 @@ Display in popup.js:
 The extension extracts content from:
 
 **Facebook:**
+
 ```javascript
-document.querySelectorAll('[role="article"]')
+document.querySelectorAll('[role="article"]');
 ```
 
 **News sites:**
+
 ```javascript
-document.querySelector('article, main, [id*="content"]')
+document.querySelector('article, main, [id*="content"]');
 ```
 
 **Fallback:**
+
 ```javascript
-document.body.innerText
+document.body.innerText;
 ```
 
-## Display
+## Output Format
 
-### Verdict Types:
+Kết quả JSON gồm các trường chính:
 
-- **Verified** (green) - Confirmed by trusted sources
-- **Needs Review** (yellow) - Mixed signals
-- **Likely False** (red) - Suspicious indicators
-- **Donation Scam** (red alert) - Fake charity post
-
-### Special Features:
-
-**Donation Post Warning:**
-```
-⚠️ ĐÂY LÀ BÀI QUYÊN GÓP
-Hãy thận trọng trước khi chuyển tiền!
-Chỉ quyên góp qua tổ chức chính thức...
-```
-
-**Component Breakdown:**
-- Spam detection score
-- Authority verification score
-- Duplication check score
-- Fact check score
-
-**Alternative Sources:**
-Links to trusted sources for reference
-
-## Requirements
-
-Model API must be running on `http://localhost:8001`
-
-Start Model API:
-```bash
-cd trustme-model
-uvicorn src.main:app --port 8001 --reload
-```
+- `url`: đường dẫn của trang đang mở
+- `title`: tiêu đề bài viết hoặc heading chính
+- `article`: văn bản bài viết (trùng `contents` nếu không có cấu trúc riêng)
+- `created_at`: ngày tạo/đăng bài (ISO string nếu parse được, ngược lại trả chuỗi gốc)
+- `author`: người viết bài hoặc chủ bài đăng (nếu xác định được)
+- `platform`: nền tảng nhận diện (facebook, instagram, twitter, tiktok, youtube, web)
+- `image_urls`: danh sách URL hình ảnh tìm thấy trong trang (nếu có)
 
 ## Permissions
 
 Extension requires:
+
 - `activeTab` - Read current page content
-- `http://localhost:8001/*` - Communicate with API
 
 No data collection. No external tracking.
 
@@ -160,27 +119,22 @@ No data collection. No external tracking.
 
 ### Extension not working:
 
-1. Check Model API is running: `curl http://localhost:8001/health`
-2. Check console for errors (inspect popup)
-3. Reload extension
+1. Reload trang và đảm bảo nội dung đã render đầy đủ
+2. Inspect popup hoặc content script console để xem lỗi selector
+3. Tắt/bật lại extension hoặc reload tại `chrome://extensions/`
 
-### No results:
+### Không thấy dữ liệu:
 
-1. Ensure page has sufficient text content
-2. Check network tab for API call failures
-3. Check if Model API is processing (may take 10-30s)
-
-### Rate limit error:
-
-Model API limits to 60 requests/min per IP. Wait 60s and try again.
+1. Đảm bảo trang đã tải nội dung (đối với Facebook/X nên cuộn để load)
+2. Kiểm tra Console trong popup hoặc content script để xem log selector
+3. Với trang render động, thử reload và chạy lại
 
 ## Future Features
 
-- [ ] Support more languages
-- [ ] Inline highlighting of suspicious text
-- [ ] Browser notifications
-- [ ] Quick share verified/debunked posts
-- [ ] User feedback mechanism
+- [ ] Bổ sung thêm selector cho các trang báo Việt Nam phổ biến
+- [ ] Xuất dữ liệu sang CSV/Google Sheets
+- [ ] Cho phép cấu hình trường JSON mong muốn
+- [ ] Đồng bộ với backend thu thập dữ liệu
 
 ## License
 
