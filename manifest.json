@@ -3,7 +3,7 @@
   "name": "TrustMe Data Collector",
   "version": "1.0",
   "description": "Thu thập nhanh dữ liệu bài viết và bài đăng dưới dạng JSON",
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab", "tabs"],
   "background": {
     "service_worker": "background.js"
   },
@@ -18,7 +18,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js", "floating_widget.js"]
+      "js": ["content.js"]
     }
   ]
 }

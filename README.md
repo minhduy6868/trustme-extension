@@ -84,9 +84,9 @@ document.body.innerText;
 
 Kết quả JSON gồm các trường chính:
 
-- `url`: đường dẫn của trang đang mở
+- `url`: đường dẫn của trang đang mở hoặc là đường dẫn của bài viết (đối với facebook)
 - `title`: tiêu đề bài viết hoặc heading chính
-- `article`: văn bản bài viết (trùng `contents` nếu không có cấu trúc riêng)
+- `article`: văn bản bài viết
 - `created_at`: ngày tạo/đăng bài (ISO string nếu parse được, ngược lại trả chuỗi gốc)
 - `author`: người viết bài hoặc chủ bài đăng (nếu xác định được)
 - `platform`: nền tảng nhận diện (facebook, instagram, twitter, tiktok, youtube, web)
