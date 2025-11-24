@@ -846,6 +846,11 @@ function extractTitle() {
 }
 
 function extractArticleText() {
+  const msnText = extractMsnArticleText();
+  if (msnText) {
+    return msnText;
+  }
+
   let bestText = null;
 
   const considerText = (el) => {
@@ -903,6 +908,135 @@ function extractArticleText() {
   }
 
   return null;
+}
+
+function extractMsnArticleText() {
+  if (!isMsnHost()) {
+    return null;
+  }
+
+  const articleRoot = findMsnArticleShadowRoot();
+  if (!articleRoot) {
+    return null;
+  }
+
+  const paragraphs = Array.from(
+    articleRoot.querySelectorAll(
+      "p, div[data-t][class*='story'], div[data-t][class*='module']"
+    )
+  )
+    .map((node) => sanitizeText(node.innerText))
+    .filter(shouldIncludeMsnParagraph);
+
+  if (paragraphs.length >= 3) {
+    return paragraphs.join("\n\n");
+  }
+
+  const fallback = sanitizeText(articleRoot.innerText || "");
+  if (!fallback || fallback.length < 120) {
+    return null;
+  }
+
+  const fallbackParagraphs = fallback
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(shouldIncludeMsnParagraph);
+
+  return fallbackParagraphs.length >= 3
+    ? fallbackParagraphs.join("\n\n")
+    : fallback;
+}
+
+function isMsnHost() {
+  const hostname = window.location.hostname || "";
+  return /(^|\.)msn\.com$/i.test(hostname);
+}
+
+function findMsnArticleShadowRoot() {
+  const desktopArticle = document.querySelector("desktop-article-content");
+  if (!desktopArticle) {
+    return null;
+  }
+
+  const articleContent = queryWithinNode(desktopArticle, "div.article-content");
+  if (!articleContent) {
+    return null;
+  }
+
+  const msnArticlePage = queryWithinNode(articleContent, "msn-article-page");
+  if (!msnArticlePage) {
+    return null;
+  }
+
+  const articlePage = queryWithinNode(msnArticlePage, "div.article-page");
+  if (!articlePage) {
+    return null;
+  }
+
+  const reader = queryWithinNode(articlePage, "cp-article-reader");
+  if (!reader) {
+    return null;
+  }
+
+  const articleContainer = queryWithinNode(
+    reader,
+    "article.article-reader-container"
+  );
+  if (!articleContainer) {
+    return null;
+  }
+
+  const cpArticle = articleContainer.querySelector("cp-article");
+  if (!cpArticle) {
+    return articleContainer;
+  }
+
+  return cpArticle.shadowRoot || cpArticle;
+}
+
+function queryWithinNode(node, selector) {
+  if (!node) return null;
+  if (node.shadowRoot) {
+    const shadowMatch = node.shadowRoot.querySelector(selector);
+    if (shadowMatch) {
+      return shadowMatch;
+    }
+  }
+  if (typeof node.querySelector === "function") {
+    const lightDomMatch = node.querySelector(selector);
+    if (lightDomMatch) {
+      return lightDomMatch;
+    }
+  }
+  return null;
+}
+
+function shouldIncludeMsnParagraph(text) {
+  if (!text) return false;
+  const normalized = text.trim();
+  if (!normalized) return false;
+
+  const lower = normalized.toLowerCase();
+  const banned = [
+    "tiếp tục đọc",
+    "thông tin khác dành cho bạn",
+    "nội dung được tài trợ",
+    "xem thêm",
+    "ẩn bớt nội dung tương tự",
+  ];
+
+  if (banned.includes(lower)) {
+    return false;
+  }
+
+  if (normalized.length < 40) {
+    const wordCount = normalized.split(/\s+/).filter(Boolean).length;
+    if (wordCount < 8) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function extractFallbackText() {
@@ -1257,6 +1391,11 @@ function cleanArticleText(text) {
 }
 
 function extractPublishedTime() {
+  const msnTime = extractMsnPublishedTime();
+  if (msnTime) {
+    return msnTime;
+  }
+
   for (const selector of META_PUBLISHED_TIME_SELECTORS) {
     const el = document.querySelector(selector);
     if (el && el.content) {
@@ -1287,13 +1426,101 @@ function extractPublishedTime() {
   return null;
 }
 
+function extractMsnPublishedTime() {
+  if (!isMsnHost()) {
+    return null;
+  }
+
+  const headerRoot = findMsnHeaderRoot();
+  if (!headerRoot) {
+    return null;
+  }
+
+  const timeNode = headerRoot.querySelector("time[datetime], time[pubdate]");
+  if (timeNode) {
+    const timestamp =
+      timeNode.getAttribute("datetime") ||
+      timeNode.getAttribute("pubdate") ||
+      sanitizeInline(timeNode.textContent || "");
+    const normalized = normalizeDate(timestamp);
+    if (normalized) {
+      return normalized;
+    }
+  }
+
+  const rawHeaderText = sanitizeInline(headerRoot.textContent || "");
+  const parsed = parseMsnHeaderDate(rawHeaderText);
+  return parsed || null;
+}
+
+function findMsnHeaderRoot() {
+  const header = document.querySelector("views-header-wc");
+  if (!header) {
+    return null;
+  }
+  return header.shadowRoot || header;
+}
+
+function parseMsnHeaderDate(text) {
+  if (!text) {
+    return null;
+  }
+
+  const dateMatch = text.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (!dateMatch) {
+    return null;
+  }
+
+  const [_, dayStr, monthStr, yearStr] = dateMatch;
+  const day = Number(dayStr);
+  const month = Number(monthStr) - 1;
+  const year = Number(yearStr);
+
+  if (
+    Number.isNaN(day) ||
+    Number.isNaN(month) ||
+    Number.isNaN(year) ||
+    day < 1 ||
+    day > 31 ||
+    month < 0 ||
+    month > 11
+  ) {
+    return null;
+  }
+
+  const date = new Date(year, month, day);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString();
+}
+
 function normalizeDate(raw) {
   if (!raw) return null;
-  const parsed = Date.parse(raw);
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (/^\d+$/.test(trimmed)) {
+    let timestamp = Number(trimmed);
+    if (!Number.isNaN(timestamp)) {
+      if (trimmed.length <= 10) {
+        timestamp *= 1000; // seconds → milliseconds
+      }
+      const numericDate = new Date(timestamp);
+      if (!Number.isNaN(numericDate.getTime())) {
+        return numericDate.toISOString();
+      }
+    }
+  }
+
+  const parsed = Date.parse(trimmed);
   if (!Number.isNaN(parsed)) {
     return new Date(parsed).toISOString();
   }
-  return raw.trim() || null;
+  return trimmed || null;
 }
 
 function extractDateFromJsonLd() {
