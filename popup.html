@@ -6,22 +6,37 @@
     <style>
       body {
         font-family: Arial;
-        min-width: 280px;
-        padding: 12px;
+        min-width: 320px;
+        padding: 12px 14px;
       }
-      #checkBtn {
-        margin-top: 10px;
+      button {
         width: 100%;
-        padding: 8px;
-        background: #007bff;
-        color: #fff;
+        padding: 10px;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: pointer;
+        font-weight: 600;
+        transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
       }
-      #checkBtn:disabled {
+      button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+      }
+      button:disabled {
         opacity: 0.6;
         cursor: not-allowed;
+        box-shadow: none;
+      }
+      #runNowBtn {
+        margin-top: 8px;
+        background: linear-gradient(135deg, #0066ff, #00b4d8);
+        color: #fff;
+      }
+      #checkBtn {
+        margin-top: 8px;
+        background: #f1f3f5;
+        color: #0f172a;
+        border: 1px solid #e2e8f0;
       }
       #jsonOutput {
         margin-top: 12px;
@@ -39,11 +54,80 @@
         font-size: 13px;
         color: #555;
       }
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 8px 0;
+        font-size: 12px;
+      }
+      .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        color: #fff;
+        margin-top: 6px;
+      }
+      .pill.verified {
+        background: #198754;
+      }
+      .pill.needs-review {
+        background: #ffc107;
+        color: #1f1f1f;
+      }
+      .pill.likely-false {
+        background: #dc3545;
+      }
+      #trustSummary {
+        margin-top: 10px;
+        padding: 8px;
+        border-radius: 6px;
+        border: 1px solid #e1e1e1;
+        background: #fdfdfd;
+      }
+      #flagsList {
+        margin-top: 6px;
+        padding-left: 16px;
+      }
+      .endpoint {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        color: #475569;
+        margin: 4px 0 8px;
+      }
+      .endpoint code {
+        background: #f1f5f9;
+        padding: 4px 6px;
+        border-radius: 4px;
+        font-size: 11px;
+        color: #0f172a;
+      }
+      .section-title {
+        margin: 0 0 4px;
+      }
     </style>
   </head>
   <body>
-    <h3>Quét dữ liệu bài viết</h3>
-    <button id="checkBtn">Thu thập dữ liệu</button>
+    <h3 class="section-title">TrustCheck</h3>
+    <div class="endpoint">
+      <span>Model endpoint:</span>
+      <code id="endpointLabel">loading...</code>
+    </div>
+    <button id="runNowBtn">Run TrustCheck now</button>
+    <button id="checkBtn">Chỉ thu thập dữ liệu</button>
+    <label class="toggle-row">
+      <input type="checkbox" id="autoCheckToggle" />
+      <span>Gửi TrustCheck sau khi thu thập (khi dùng nút dữ liệu)</span>
+    </label>
+    <div id="trustSummary" hidden>
+      <div id="verdictBadge" class="pill">Đang xử lý...</div>
+      <div id="scoreLine"></div>
+      <div id="summaryLine"></div>
+      <ul id="flagsList"></ul>
+    </div>
     <div id="status"></div>
     <pre id="jsonOutput"></pre>
     <style>
