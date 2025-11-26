@@ -1,18 +1,18 @@
 // popup.js - TrustCheck end-to-end trigger from extension
 
-const checkBtn = document.getElementById("checkBtn");
-const runNowBtn = document.getElementById("runNowBtn");
-const statusEl = document.getElementById("status");
-const jsonOutput = document.getElementById("jsonOutput");
-const autoCheckToggle = document.getElementById("autoCheckToggle");
-const trustSummary = document.getElementById("trustSummary");
-const verdictBadge = document.getElementById("verdictBadge");
-const scoreLine = document.getElementById("scoreLine");
-const summaryLine = document.getElementById("summaryLine");
-const flagsList = document.getElementById("flagsList");
-const endpointLabel = document.getElementById("endpointLabel");
+const checkBtn = document.getElementById('checkBtn');
+const runNowBtn = document.getElementById('runNowBtn');
+const statusEl = document.getElementById('status');
+const jsonOutput = document.getElementById('jsonOutput');
+const autoCheckToggle = document.getElementById('autoCheckToggle');
+const trustSummary = document.getElementById('trustSummary');
+const verdictBadge = document.getElementById('verdictBadge');
+const scoreLine = document.getElementById('scoreLine');
+const summaryLine = document.getElementById('summaryLine');
+const flagsList = document.getElementById('flagsList');
+const endpointLabel = document.getElementById('endpointLabel');
 
-let API_BASE = "http://localhost:8001";
+let API_BASE = 'http://localhost:8001';
 
 init();
 
@@ -22,11 +22,11 @@ function init() {
 
 async function loadConfig() {
   try {
-    const resp = await fetch(chrome.runtime.getURL("config.json"));
+    const resp = await fetch(chrome.runtime.getURL('config.json'));
     if (resp.ok) {
       const cfg = await resp.json();
       if (cfg.ENDPOINT_MODEL) {
-        API_BASE = cfg.ENDPOINT_MODEL.replace(/\/+$/, "");
+        API_BASE = cfg.ENDPOINT_MODEL.replace(/\/+$/, '');
         logDebug(`Loaded model endpoint from config: ${API_BASE}`);
       }
     } else {
@@ -39,13 +39,13 @@ async function loadConfig() {
   }
 }
 
-runNowBtn.addEventListener("click", () => handleExtraction(true));
-checkBtn.addEventListener("click", () => handleExtraction(autoCheckToggle.checked));
+runNowBtn.addEventListener('click', () => handleExtraction(true));
+checkBtn.addEventListener('click', () => handleExtraction(autoCheckToggle.checked));
 
 async function handleExtraction(runTrustCheck) {
   resetUI();
   setButtonsDisabled(true);
-  statusEl.textContent = "Đang thu thập dữ liệu...";
+  statusEl.textContent = 'Đang thu thập dữ liệu...';
 
   try {
     const extraction = await extractFromActiveTab();
@@ -67,12 +67,12 @@ function extractFromActiveTab() {
       const currentTab = tabs[0];
 
       if (!currentTab || !currentTab.id) {
-        reject(new Error("Không xác định được tab hiện tại."));
+        reject(new Error('Không xác định được tab hiện tại.'));
         return;
       }
 
       chrome.runtime.sendMessage(
-        { action: "extractPageData", tabId: currentTab.id },
+        { action: 'extractPageData', tabId: currentTab.id },
         (response) => {
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
@@ -81,14 +81,12 @@ function extractFromActiveTab() {
 
           if (!response || !response.success) {
             const message =
-              response && response.error
-                ? response.error
-                : "Content script không phản hồi.";
+              response && response.error ? response.error : 'Content script không phản hồi.';
             reject(new Error(message));
             return;
           }
 
-          logDebug("Extracted payload", response.data);
+          logDebug('Extracted payload', response.data);
           resolve(response);
         }
       );
@@ -102,60 +100,60 @@ function setButtonsDisabled(disabled) {
 }
 
 function resetUI() {
-  statusEl.style.color = "#555";
-  statusEl.textContent = "";
-  jsonOutput.textContent = "";
+  statusEl.style.color = '#555';
+  statusEl.textContent = '';
+  jsonOutput.textContent = '';
   trustSummary.hidden = true;
-  flagsList.innerHTML = "";
-  verdictBadge.textContent = "";
-  verdictBadge.className = "pill";
-  scoreLine.textContent = "";
-  summaryLine.textContent = "";
+  flagsList.innerHTML = '';
+  verdictBadge.textContent = '';
+  verdictBadge.className = 'pill';
+  scoreLine.textContent = '';
+  summaryLine.textContent = '';
 }
 
 function renderError(message) {
-  statusEl.style.color = "#dc3545";
+  statusEl.style.color = '#dc3545';
   statusEl.textContent = `❌ ${message}`;
-  jsonOutput.textContent = "";
+  jsonOutput.textContent = '';
   trustSummary.hidden = true;
   setButtonsDisabled(false);
-  logDebug("Error", message);
+  logDebug('Error', message);
 }
 
 function renderData(data) {
   if (!data) {
-    renderError("Không có dữ liệu trả về.");
+    renderError('Không có dữ liệu trả về.');
     return;
   }
-  statusEl.style.color = "#1f1f1f";
+  statusEl.style.color = '#1f1f1f';
   statusEl.innerHTML = `✅ Đã thu thập dữ liệu<br><small>URL: ${escapeHtml(
-    data.url || ""
+    data.url || ''
   )}</small>`;
   jsonOutput.textContent = JSON.stringify(data, null, 2);
 }
 
 async function submitToTrustCheck(data) {
   if (!data.article || data.article.length < 10) {
-    renderError("Không có nội dung để gửi TrustCheck.");
+    renderError('Không có nội dung để gửi TrustCheck.');
     return;
   }
 
   trustSummary.hidden = false;
-  setVerdictBadge("processing");
-  summaryLine.textContent = "Đang gửi tới TrustCheck...";
+  setVerdictBadge('processing');
+  summaryLine.textContent = 'Đang gửi tới TrustCheck...';
 
   const payload = {
     text: data.article,
     url: data.url,
-    language: "vi",
+    language: 'vi',
     deep_analysis: true,
   };
 
   try {
-    logDebug("Sending to model", { endpoint: `${API_BASE}/verify`, payload });
+    logDebug('Sending to model', { endpoint: `${API_BASE}/verify`, payload });
     const resp = await fetch(`${API_BASE}/verify`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
@@ -166,7 +164,7 @@ async function submitToTrustCheck(data) {
     }
 
     const json = await resp.json();
-    logDebug("Job created", json);
+    logDebug('Job created', json);
     pollResult(json.job_id, 0);
   } catch (err) {
     renderError(`Không thể kết nối TrustCheck: ${err}`);
@@ -174,8 +172,10 @@ async function submitToTrustCheck(data) {
 }
 
 async function pollResult(jobId, attempt) {
-  if (attempt > 60) {
-    renderError("Hết thời gian chờ kết quả (đã đợi ~120s). Thử lại hoặc kiểm tra log model/crawler.");
+  if (attempt > 300) {
+    renderError(
+      'Hết thời gian chờ kết quả (đã đợi ~600s). Thử lại hoặc kiểm tra log model/crawler.'
+    );
     return;
   }
   try {
@@ -185,14 +185,14 @@ async function pollResult(jobId, attempt) {
       return;
     }
     const result = await resp.json();
-    if (result.status === "completed") {
+    if (result.status === 'completed') {
       renderTrustResult(result);
-      logDebug("Pipeline completed", result);
-    } else if (result.status === "failed") {
-      renderError(result.error || "Phân tích thất bại");
-      logDebug("Pipeline failed", result);
+      logDebug('Pipeline completed', result);
+    } else if (result.status === 'failed') {
+      renderError(result.error || 'Phân tích thất bại');
+      logDebug('Pipeline failed', result);
     } else {
-      summaryLine.textContent = "Đang xử lý...";
+      summaryLine.textContent = 'Đang xử lý...';
       setTimeout(() => pollResult(jobId, attempt + 1), 2000);
     }
   } catch (err) {
@@ -202,36 +202,36 @@ async function pollResult(jobId, attempt) {
 
 function renderTrustResult(result) {
   trustSummary.hidden = false;
-  const verdict = result.verdict || "needs-review";
+  const verdict = result.verdict || 'needs-review';
   setVerdictBadge(verdict);
-  scoreLine.textContent = `Trust score: ${result.trust_score ?? "--"}`;
-  summaryLine.textContent = result.summary || "";
-  flagsList.innerHTML = "";
+  scoreLine.textContent = `Trust score: ${result.trust_score ?? '--'}`;
+  summaryLine.textContent = result.summary || '';
+  flagsList.innerHTML = '';
   (result.flags || []).forEach((flag) => {
-    const li = document.createElement("li");
+    const li = document.createElement('li');
     li.textContent = flag;
     flagsList.appendChild(li);
   });
 }
 
 function setVerdictBadge(verdict) {
-  verdictBadge.className = "pill";
+  verdictBadge.className = 'pill';
   switch (verdict) {
-    case "verified":
-      verdictBadge.classList.add("verified");
-      verdictBadge.textContent = "Tin cậy";
+    case 'verified':
+      verdictBadge.classList.add('verified');
+      verdictBadge.textContent = 'Tin cậy';
       break;
-    case "likely-false":
-      verdictBadge.classList.add("likely-false");
-      verdictBadge.textContent = "Có thể giả";
+    case 'likely-false':
+      verdictBadge.classList.add('likely-false');
+      verdictBadge.textContent = 'Có thể giả';
       break;
-    case "processing":
-      verdictBadge.classList.add("needs-review");
-      verdictBadge.textContent = "Đang xử lý...";
+    case 'processing':
+      verdictBadge.classList.add('needs-review');
+      verdictBadge.textContent = 'Đang xử lý...';
       break;
     default:
-      verdictBadge.classList.add("needs-review");
-      verdictBadge.textContent = "Cần xem lại";
+      verdictBadge.classList.add('needs-review');
+      verdictBadge.textContent = 'Cần xem lại';
       break;
   }
 }
@@ -241,16 +241,16 @@ function updateEndpointLabel() {
 }
 
 function escapeHtml(value) {
-  if (value === null || value === undefined) return "";
+  if (value === null || value === undefined) return '';
   return value
     .toString()
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function logDebug(message, ...args) {
-  console.log("[TrustCheck]", message, ...args);
+  console.log('[TrustCheck]', message, ...args);
 }
