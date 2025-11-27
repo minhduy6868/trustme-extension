@@ -2,142 +2,474 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>TrustMe Checker</title>
+    <title>TrustMeBro Checker</title>
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap");
+
+      :root {
+        --accent: #0ea5e9;
+        --accent-strong: #2563eb;
+        --accent-soft: #e0f2fe;
+        --muted: #475569;
+        --card: #ffffff;
+        --border: #e2e8f0;
+        --shadow: 0 16px 50px rgba(15, 23, 42, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: Arial;
-        min-width: 320px;
-        padding: 12px 14px;
+        margin: 0;
+        padding: 14px;
+        min-width: 360px;
+        color: #0f172a;
+        font-family: "Space Grotesk", "DM Sans", system-ui, -apple-system,
+          "Segoe UI", sans-serif;
+        background: radial-gradient(
+            120% 140% at 15% 20%,
+            #d7f4ff 0%,
+            rgba(231, 246, 255, 0.6) 40%,
+            rgba(255, 255, 255, 0) 70%
+          ),
+          linear-gradient(135deg, #f8fafc 0%, #f7f2ff 100%);
       }
+
+      .shell {
+        position: relative;
+        overflow: hidden;
+        background: var(--card);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: var(--shadow);
+        isolation: isolate;
+      }
+
+      .shell::after {
+        content: "";
+        position: absolute;
+        inset: -40% 40% auto auto;
+        width: 220px;
+        height: 220px;
+        background: radial-gradient(
+          circle at 30% 30%,
+          rgba(14, 165, 233, 0.35),
+          rgba(37, 99, 235, 0)
+        );
+        filter: blur(6px);
+        z-index: -1;
+        transform: rotate(-12deg);
+      }
+
+      h1,
+      h3 {
+        margin: 0;
+      }
+
+      .hero {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .hero__badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        width: fit-content;
+        padding: 6px 10px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: #fff;
+        border-radius: 999px;
+        font-size: 11px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .hero__heading h1 {
+        font-size: 22px;
+        letter-spacing: -0.02em;
+      }
+
+      .hero__heading p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .hero__trust {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        border-radius: 14px;
+        background: radial-gradient(circle at 10% 10%, #e0f2fe, #f8fafc 55%),
+          linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(16, 185, 129, 0.08));
+        border: 1px solid rgba(14, 165, 233, 0.25);
+      }
+
+      .trust-icon {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #22c55e, #0ea5e9);
+        color: #fff;
+        font-weight: 700;
+        box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
+      }
+
+      .trust-title {
+        font-weight: 700;
+        font-size: 14px;
+        margin-bottom: 2px;
+      }
+
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
       button {
-        width: 100%;
-        padding: 10px;
         border: none;
-        border-radius: 8px;
-        cursor: pointer;
+        border-radius: 12px;
+        padding: 12px;
         font-weight: 600;
-        transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+        font-size: 14px;
+        cursor: pointer;
+        transition: transform 120ms ease, box-shadow 120ms ease,
+          opacity 120ms ease;
       }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: #fff;
+        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.3);
+      }
+
+      .btn-secondary {
+        background: rgba(14, 165, 233, 0.08);
+        color: #075985;
+        border: 1px solid rgba(14, 165, 233, 0.35);
+      }
+
       button:hover:not(:disabled) {
         transform: translateY(-1px);
-        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
       }
+
       button:disabled {
         opacity: 0.6;
         cursor: not-allowed;
         box-shadow: none;
       }
-      #runNowBtn {
-        margin-top: 8px;
-        background: linear-gradient(135deg, #0066ff, #00b4d8);
-        color: #fff;
-      }
-      #checkBtn {
-        margin-top: 8px;
-        background: #f1f3f5;
-        color: #0f172a;
-        border: 1px solid #e2e8f0;
-      }
-      #jsonOutput {
-        margin-top: 12px;
-        font-size: 12px;
-        white-space: pre-wrap;
-        background: #f8f9fa;
-        border: 1px solid #e1e1e1;
-        border-radius: 6px;
-        padding: 8px;
-        max-height: 260px;
-        overflow: auto;
-      }
-      #status {
-        margin-top: 10px;
+
+      .toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #f8fafc;
         font-size: 13px;
-        color: #555;
-      }
-      .toggle-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin: 8px 0;
-        font-size: 12px;
-      }
-      .pill {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        color: #fff;
-        margin-top: 6px;
-      }
-      .pill.verified {
-        background: #198754;
-      }
-      .pill.needs-review {
-        background: #ffc107;
-        color: #1f1f1f;
-      }
-      .pill.likely-false {
-        background: #dc3545;
-      }
-      #trustSummary {
-        margin-top: 10px;
-        padding: 8px;
-        border-radius: 6px;
-        border: 1px solid #e1e1e1;
-        background: #fdfdfd;
-      }
-      #flagsList {
-        margin-top: 6px;
-        padding-left: 16px;
-      }
-      .endpoint {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 11px;
-        color: #475569;
-        margin: 4px 0 8px;
-      }
-      .endpoint code {
-        background: #f1f5f9;
-        padding: 4px 6px;
-        border-radius: 4px;
-        font-size: 11px;
         color: #0f172a;
       }
-      .section-title {
-        margin: 0 0 4px;
+
+      .toggle input {
+        display: none;
+      }
+
+      .toggle__control {
+        position: relative;
+        width: 44px;
+        height: 24px;
+        background: #e2e8f0;
+        border-radius: 999px;
+        transition: all 180ms ease;
+      }
+
+      .toggle__control::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 4px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
+        transition: transform 180ms ease;
+      }
+
+      .toggle input:checked + .toggle__control {
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      }
+
+      .toggle input:checked + .toggle__control::after {
+        transform: translateX(18px);
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+        background: #ffffffee;
+        margin-bottom: 12px;
+      }
+
+      .trust-card {
+        background: linear-gradient(
+          140deg,
+          rgba(14, 165, 233, 0.08),
+          rgba(16, 185, 129, 0.08)
+        );
+        border: 1px solid rgba(14, 165, 233, 0.3);
+      }
+
+      .trust-card__top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+      }
+
+      .trust-card__meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 12px;
+        color: #0f172a;
+      }
+
+      .pill.verified {
+        background: #ecfdf3;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+      }
+
+      .pill.needs-review {
+        background: #fff7ed;
+        color: #9a3412;
+        border: 1px solid #fed7aa;
+      }
+
+      .pill.likely-false {
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fecdd3;
+      }
+
+      .pill.processing {
+        background: #eef2ff;
+        color: #312e81;
+        border: 1px solid #c7d2fe;
+      }
+
+      #scoreLine {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: #fff;
+        font-weight: 700;
+        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+      }
+
+      #summaryLine {
+        color: #0f172a;
+        line-height: 1.4;
+        font-weight: 600;
+      }
+
+      .flags-wrap {
+        border-top: 1px solid rgba(226, 232, 240, 0.7);
+        padding-top: 10px;
+        margin-top: 8px;
+      }
+
+      .flags-label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        margin-bottom: 6px;
+      }
+
+      #flagsList {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-left: 0;
+        margin: 0;
+        list-style: none;
+      }
+
+      #flagsList li {
+        margin: 0;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        color: #0f172a;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .status {
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #f8fafc;
+        font-size: 13px;
+      }
+
+      .status--success {
+        border-color: #86efac;
+        background: #ecfdf3;
+        color: #166534;
+      }
+
+      .status--error {
+        border-color: #fecdd3;
+        background: #fff1f2;
+        color: #b91c1c;
+      }
+
+      .status--progress {
+        border-color: #bfdbfe;
+        background: #eef2ff;
+        color: #1d4ed8;
+      }
+
+      .status--neutral {
+        color: var(--muted);
+      }
+
+      .info-card .card__title {
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .info-item {
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #f8fafc;
+      }
+
+      .info-label {
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.01em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .info-value {
+        font-weight: 600;
+        color: #0f172a;
+        word-break: break-word;
       }
     </style>
   </head>
   <body>
-    <h3 class="section-title">TrustCheck</h3>
-    <div class="endpoint">
-      <span>Model endpoint:</span>
-      <code id="endpointLabel">loading...</code>
-    </div>
-    <button id="runNowBtn">Run TrustCheck now</button>
-    <button id="checkBtn">Chỉ thu thập dữ liệu</button>
-    <label class="toggle-row">
-      <input type="checkbox" id="autoCheckToggle" />
-      <span>Gửi TrustCheck sau khi thu thập (khi dùng nút dữ liệu)</span>
-    </label>
-    <div id="trustSummary" hidden>
-      <div id="verdictBadge" class="pill">Đang xử lý...</div>
-      <div id="scoreLine"></div>
-      <div id="summaryLine"></div>
-      <ul id="flagsList"></ul>
-    </div>
-    <div id="status"></div>
-    <pre id="jsonOutput"></pre>
-    <style>
-      body,
-      button,
-      h3 {
-        font-family: Arial, Helvetica, "Segoe UI", "Tahoma", "Geneva", "Verdana",
-          sans-serif;
-      }
-    </style>
+    <main class="shell">
+      <header class="hero">
+        <div class="hero__badge">TrustMeBro</div>
+        <div class="hero__heading">
+          <h1>TrustCheck</h1>
+          <p>Thu thập nội dung và gửi đánh giá độ tin cậy chỉ với một cú nhấp.</p>
+        </div>
+        <div class="hero__trust">
+          <div class="trust-icon">✓</div>
+          <div>
+            <div class="trust-title">TrustCheck sẵn sàng</div>
+          </div>
+        </div>
+      </header>
+
+      <section class="actions">
+        <button id="runNowBtn" class="btn-primary">Phân tích &amp; chấm điểm</button>
+        <button id="checkBtn" class="btn-secondary">Chỉ thu thập dữ liệu</button>
+        <label class="toggle">
+          <input type="checkbox" id="autoCheckToggle" />
+          <span class="toggle__control" aria-hidden="true"></span>
+          <span class="toggle__label">Tự gửi TrustCheck sau khi thu thập</span>
+        </label>
+      </section>
+
+      <section id="trustSummary" class="card trust-card" hidden>
+        <div class="trust-card__top">
+          <div id="verdictBadge" class="pill processing">Đang xử lý...</div>
+          <div class="trust-card__meta">
+            <div id="scoreLine">Trust score: --</div>
+            <div id="summaryLine"></div>
+          </div>
+        </div>
+        <div class="flags-wrap">
+          <div class="flags-label">Tín hiệu phát hiện</div>
+          <ul id="flagsList"></ul>
+        </div>
+      </section>
+
+      <section id="statusCard" class="card status-card" style="display: none">
+        <div id="status" class="status status--neutral"></div>
+      </section>
+
+      <section class="card info-card">
+        <div class="card__title">Thông tin bài viết</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Tiêu đề</div>
+            <div id="infoTitle" class="info-value">Chưa có dữ liệu</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Tác giả</div>
+            <div id="infoAuthor" class="info-value">—</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Ngày đăng</div>
+            <div id="infoDate" class="info-value">—</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Nền tảng</div>
+            <div id="infoPlatform" class="info-value">—</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Liên kết</div>
+            <a id="infoUrl" class="info-value" href="#" target="_blank" rel="noopener noreferrer">—</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
     <script src="popup.js"></script>
   </body>
 </html>

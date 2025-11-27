@@ -1,4 +1,4 @@
-# TrustMe Chrome Extension
+# TrustMeBro Chrome Extension
 
 Browser extension for quickly extracting structured article/post data.
 
@@ -26,12 +26,12 @@ Allows users to capture metadata and main content from news articles and social 
 2. Enable "Developer mode" (top right)
 3. Click "Load unpacked"
 4. Select the `trustme-extension/` folder
-5. Extension icon appears in toolbar
+5. TrustMeBro icon appears in toolbar
 
 ## Usage
 
 1. Open any news article or social media post
-2. Click TrustMe extension icon in toolbar
+2. Click TrustMeBro extension icon in toolbar
 3. Click "Thu thập dữ liệu"
 4. View JSON payload (copy or export as needed)
 
@@ -106,7 +106,7 @@ No data collection. No external tracking.
 
 1. Make code changes
 2. Go to `chrome://extensions/`
-3. Click "Reload" on TrustMe extension
+3. Click "Reload" on TrustMeBro extension
 4. Test on a website
 
 ### Debug:

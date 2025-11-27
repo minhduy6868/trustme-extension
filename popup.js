@@ -3,20 +3,25 @@
 const checkBtn = document.getElementById('checkBtn');
 const runNowBtn = document.getElementById('runNowBtn');
 const statusEl = document.getElementById('status');
-const jsonOutput = document.getElementById('jsonOutput');
 const autoCheckToggle = document.getElementById('autoCheckToggle');
 const trustSummary = document.getElementById('trustSummary');
 const verdictBadge = document.getElementById('verdictBadge');
 const scoreLine = document.getElementById('scoreLine');
 const summaryLine = document.getElementById('summaryLine');
 const flagsList = document.getElementById('flagsList');
-const endpointLabel = document.getElementById('endpointLabel');
+const statusCard = document.getElementById('statusCard');
+const infoTitle = document.getElementById('infoTitle');
+const infoAuthor = document.getElementById('infoAuthor');
+const infoDate = document.getElementById('infoDate');
+const infoPlatform = document.getElementById('infoPlatform');
+const infoUrl = document.getElementById('infoUrl');
 
 let API_BASE = 'http://localhost:8001';
 
 init();
 
 function init() {
+  resetArticleInfo();
   loadConfig();
 }
 
@@ -34,8 +39,6 @@ async function loadConfig() {
     }
   } catch (err) {
     logDebug(`Failed to read config.json, using default ${API_BASE}`, err);
-  } finally {
-    updateEndpointLabel();
   }
 }
 
@@ -45,7 +48,7 @@ checkBtn.addEventListener('click', () => handleExtraction(autoCheckToggle.checke
 async function handleExtraction(runTrustCheck) {
   resetUI();
   setButtonsDisabled(true);
-  statusEl.textContent = 'Đang thu thập dữ liệu...';
+  setStatus('progress', 'Đang thu thập dữ liệu...');
 
   try {
     const extraction = await extractFromActiveTab();
@@ -100,21 +103,19 @@ function setButtonsDisabled(disabled) {
 }
 
 function resetUI() {
-  statusEl.style.color = '#555';
-  statusEl.textContent = '';
-  jsonOutput.textContent = '';
+  setStatus('neutral', '');
+  resetArticleInfo();
   trustSummary.hidden = true;
   flagsList.innerHTML = '';
   verdictBadge.textContent = '';
-  verdictBadge.className = 'pill';
+  verdictBadge.className = 'pill processing';
   scoreLine.textContent = '';
   summaryLine.textContent = '';
 }
 
 function renderError(message) {
-  statusEl.style.color = '#dc3545';
-  statusEl.textContent = `❌ ${message}`;
-  jsonOutput.textContent = '';
+  setStatus('error', `⚠️ ${escapeHtml(message)}`);
+  resetArticleInfo();
   trustSummary.hidden = true;
   setButtonsDisabled(false);
   logDebug('Error', message);
@@ -125,11 +126,11 @@ function renderData(data) {
     renderError('Không có dữ liệu trả về.');
     return;
   }
-  statusEl.style.color = '#1f1f1f';
-  statusEl.innerHTML = `✅ Đã thu thập dữ liệu<br><small>URL: ${escapeHtml(
-    data.url || ''
-  )}</small>`;
-  jsonOutput.textContent = JSON.stringify(data, null, 2);
+  setStatus(
+    'success',
+    `✅ Đã thu thập dữ liệu<br><small>URL: ${escapeHtml(data.url || '')}</small>`
+  );
+  fillArticleInfo(data);
 }
 
 async function submitToTrustCheck(data) {
@@ -141,6 +142,7 @@ async function submitToTrustCheck(data) {
   trustSummary.hidden = false;
   setVerdictBadge('processing');
   summaryLine.textContent = 'Đang gửi tới TrustCheck...';
+  setStatus('progress', 'Đang gửi dữ liệu tới TrustCheck...');
 
   const payload = {
     text: data.article,
@@ -192,7 +194,7 @@ async function pollResult(jobId, attempt) {
       renderError(result.error || 'Phân tích thất bại');
       logDebug('Pipeline failed', result);
     } else {
-      summaryLine.textContent = 'Đang xử lý...';
+      summaryLine.textContent = '';
       setTimeout(() => pollResult(jobId, attempt + 1), 2000);
     }
   } catch (err) {
@@ -207,6 +209,7 @@ function renderTrustResult(result) {
   scoreLine.textContent = `Trust score: ${result.trust_score ?? '--'}`;
   summaryLine.textContent = result.summary || '';
   flagsList.innerHTML = '';
+  setStatus('success', 'Đã nhận kết quả từ TrustCheck.');
   (result.flags || []).forEach((flag) => {
     const li = document.createElement('li');
     li.textContent = flag;
@@ -215,7 +218,7 @@ function renderTrustResult(result) {
 }
 
 function setVerdictBadge(verdict) {
-  verdictBadge.className = 'pill';
+  verdictBadge.className = 'pill processing';
   switch (verdict) {
     case 'verified':
       verdictBadge.classList.add('verified');
@@ -226,7 +229,7 @@ function setVerdictBadge(verdict) {
       verdictBadge.textContent = 'Có thể giả';
       break;
     case 'processing':
-      verdictBadge.classList.add('needs-review');
+      verdictBadge.classList.add('processing');
       verdictBadge.textContent = 'Đang xử lý...';
       break;
     default:
@@ -236,8 +239,13 @@ function setVerdictBadge(verdict) {
   }
 }
 
-function updateEndpointLabel() {
-  endpointLabel.textContent = `${API_BASE}/verify`;
+function setStatus(state, message) {
+  if (!statusEl || !statusCard) return;
+  const nextState = state ? `status--${state}` : 'status--neutral';
+  statusEl.className = `status ${nextState}`;
+  statusEl.innerHTML = message || '';
+  const shouldShow = Boolean(message);
+  statusCard.style.display = shouldShow ? 'block' : 'none';
 }
 
 function escapeHtml(value) {
@@ -253,4 +261,42 @@ function escapeHtml(value) {
 
 function logDebug(message, ...args) {
   console.log('[TrustCheck]', message, ...args);
+}
+
+function resetArticleInfo() {
+  setInfoValue(infoTitle, 'Chưa có dữ liệu');
+  setInfoValue(infoAuthor, '—');
+  setInfoValue(infoDate, '—');
+  setInfoValue(infoPlatform, '—');
+  setInfoValue(infoUrl, '—');
+  if (infoUrl instanceof HTMLAnchorElement) {
+    infoUrl.removeAttribute('href');
+  }
+}
+
+function fillArticleInfo(data) {
+  setInfoValue(infoTitle, data.title || 'Không có tiêu đề');
+  setInfoValue(infoAuthor, data.author || 'Không rõ');
+  setInfoValue(infoDate, data.created_at || 'Không rõ');
+  setInfoValue(infoPlatform, data.platform || 'web');
+  const url = data.url || '';
+  if (infoUrl) {
+    if (infoUrl instanceof HTMLAnchorElement) {
+      infoUrl.textContent = url || '—';
+      if (url) {
+        infoUrl.href = url;
+        infoUrl.target = '_blank';
+        infoUrl.rel = 'noopener noreferrer';
+      } else {
+        infoUrl.removeAttribute('href');
+      }
+    } else {
+      setInfoValue(infoUrl, url || '—');
+    }
+  }
+}
+
+function setInfoValue(el, value) {
+  if (!el) return;
+  el.textContent = value || '—';
 }

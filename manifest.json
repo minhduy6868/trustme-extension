@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "TrustMe Data Collector",
+  "name": "TrustMeBro Data Collector",
   "version": "1.0",
   "description": "Thu thập nhanh dữ liệu bài viết và bài đăng dưới dạng JSON",
   "permissions": ["activeTab", "tabs"],

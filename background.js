@@ -1,4 +1,4 @@
-// background.js - TrustMe Extension
+// background.js - TrustMeBro Extension
 // Phối hợp thu thập dữ liệu bài viết thay vì đánh giá độ tin cậy
 
 /**
