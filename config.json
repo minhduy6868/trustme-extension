@@ -1,6 +1,6 @@
 {
   "ENDPOINT_MODEL": "http://localhost:8001",
-  "GEMINI_API_KEY": "AIzaSyA7hoT0G1-GKVycNqFYVKNK855fDNGUDkY",
-  "GEMINI_API_URL": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
-  "USE_GEMINI_FOR_FORMATTING": true
+  "OPENROUTER_API_KEY": "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",
+  "OPENROUTER_API_URL": "https://openrouter.ai/api/v1/chat/completions",
+  "USE_AI_ENHANCEMENT": true
 }

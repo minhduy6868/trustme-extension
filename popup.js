@@ -1,4 +1,4 @@
-// popup.js - Enhanced TrustCheck with Gemini AI integration
+// popup.js - TrustMeBro extension with OpenRouter AI enhancement
 
 const runNowBtn = document.getElementById('runNowBtn');
 const statusEl = document.getElementById('status');
@@ -15,10 +15,11 @@ const infoDate = document.getElementById('infoDate');
 const infoPlatform = document.getElementById('infoPlatform');
 const infoUrl = document.getElementById('infoUrl');
 
+// API Configuration
 let API_BASE = 'http://localhost:8001';
-let GEMINI_API_KEY = 'AIzaSyA7hoT0G1-GKVycNqFYVKNK855fDNGUDkY';
-let GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-let USE_GEMINI_FOR_FORMATTING = true;
+let OPENROUTER_API_KEY = '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';
+let OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+let USE_AI_ENHANCEMENT = true;
 
 init();
 
@@ -36,14 +37,14 @@ async function loadConfig() {
         API_BASE = cfg.ENDPOINT_MODEL.replace(/\/+$/, '');
         logDebug(`Loaded model endpoint from config: ${API_BASE}`);
       }
-      if (cfg.GEMINI_API_KEY) {
-        GEMINI_API_KEY = cfg.GEMINI_API_KEY;
+      if (cfg.OPENROUTER_API_KEY) {
+        OPENROUTER_API_KEY = cfg.OPENROUTER_API_KEY;
       }
-      if (cfg.GEMINI_API_URL) {
-        GEMINI_API_URL = cfg.GEMINI_API_URL;
+      if (cfg.OPENROUTER_API_URL) {
+        OPENROUTER_API_URL = cfg.OPENROUTER_API_URL;
       }
-      if (cfg.USE_GEMINI_FOR_FORMATTING !== undefined) {
-        USE_GEMINI_FOR_FORMATTING = cfg.USE_GEMINI_FOR_FORMATTING;
+      if (cfg.USE_AI_ENHANCEMENT !== undefined) {
+        USE_AI_ENHANCEMENT = cfg.USE_AI_ENHANCEMENT;
       }
       logDebug('Loaded full config:', cfg);
     } else {
@@ -162,13 +163,13 @@ async function submitToTrustCheck(data) {
   }
 }
 
-async function beautifyWithGemini(localResult) {
-  if (!USE_GEMINI_FOR_FORMATTING) {
-    logDebug('Gemini beautification disabled');
+async function enhanceResultWithAI(localResult) {
+  if (!USE_AI_ENHANCEMENT) {
+    logDebug('AI enhancement disabled');
     return localResult;
   }
 
-  logDebug('Starting Gemini beautification...', localResult);
+  logDebug('Starting AI enhancement...', localResult);
 
   // Convert technical flags to readable Vietnamese
   const flagsExplanation = (localResult.flags || []).map(flag => {
@@ -197,7 +198,7 @@ async function beautifyWithGemini(localResult) {
 
   const prompt = `Bạn là chuyên gia phân tích tin tức. Hãy VIẾT LẠI kết quả phân tích dưới đây thành ngôn ngữ TỰ NHIÊN, DỄ HIỂU cho người đọc thông thường.
 
-📊 DỮ LIỆU PHÂN TÍCH:
+� DỮ LIỆU PHÂN TÍCH:
 Điểm tin cậy: ${localResult.trust_score}/100
 Kết luận: ${localResult.verdict === 'verified' ? 'Đáng tin cậy' : localResult.verdict === 'likely-false' ? 'Nghi ngờ' : 'Cần thận trọng'}
 
@@ -230,38 +231,47 @@ Trả về JSON (KHÔNG dùng markdown, chỉ JSON thuần):
 }`;
 
   try {
-    summaryLine.textContent = 'Đang làm sạch kết quả với Gemini AI...';
+    summaryLine.textContent = '🤖 Đang làm đẹp kết quả với AI...';
     
-    const response = await fetch(GEMINI_API_URL, {
+    const response = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
       headers: {
-        'x-goog-api-key': GEMINI_API_KEY,
+        'Authorization': 'Bearer ' + OPENROUTER_API_KEY,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }]
+        model: 'x-ai/grok-4.1-fast:free',
+        messages: [
+          {role: 'system', content: 'Bạn là chuyên gia kiểm chứng tin tức, trả lời bằng tiếng Việt.'},
+          {role: 'user', content: prompt}
+        ],
+        stream: false,
+        temperature: 0.3,
+        extra_body: {
+          reasoning: {
+            enabled: true
+          }
+        }
       })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      logDebug('Gemini API error:', response.status, errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      logDebug('OpenRouter API error:', response.status, errorText);
+      throw new Error(`OpenRouter API error: ${response.status}`);
     }
 
     const result = await response.json();
-    logDebug('Gemini raw response:', result);
+    logDebug('OpenRouter raw response:', result);
     
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+    const text = result.choices?.[0]?.message?.content;
     
     if (!text) {
-      logDebug('No text in Gemini response');
+      logDebug('No text in OpenRouter response');
       return localResult;
     }
 
-    logDebug('Gemini response text:', text);
+    logDebug('OpenRouter response text:', text);
 
     // Try to extract JSON from response
     let jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -277,7 +287,7 @@ Trả về JSON (KHÔNG dùng markdown, chỉ JSON thuần):
     if (jsonMatch) {
       try {
         const beautified = JSON.parse(jsonMatch[0]);
-        logDebug('Gemini beautified result:', beautified);
+        logDebug('AI enhanced result:', beautified);
         
         summaryLine.textContent = '';
         
@@ -287,18 +297,18 @@ Trả về JSON (KHÔNG dùng markdown, chỉ JSON thuần):
           detailed_analysis: beautified.detailed_analysis || localResult.detailed_analysis,
           flags: beautified.flags && beautified.flags.length > 0 ? beautified.flags : localResult.flags,
           action_suggestion: beautified.action_suggestion || null,
-          _gemini_enhanced: true
+          _ai_enhanced: true
         };
       } catch (parseError) {
         logDebug('JSON parse error:', parseError, 'Raw:', jsonMatch[0]);
       }
     } else {
-      logDebug('No JSON found in Gemini response');
+      logDebug('No JSON found in AI response');
     }
     
     return localResult;
   } catch (error) {
-    logDebug('Gemini beautification failed:', error);
+    logDebug('AI enhancement failed:', error);
     summaryLine.textContent = '';
     return localResult;
   }
@@ -351,14 +361,14 @@ async function pollResult(jobId, attempt) {
     }
     const result = await resp.json();
     if (result.status === 'completed') {
-      // Show status for Gemini enhancement
-      if (USE_GEMINI_FOR_FORMATTING) {
-        summaryLine.textContent = 'Đang làm sạch kết quả với Gemini AI...';
-        setStatus('progress', 'Đang làm sạch và phân tích kết quả bằng Gemini AI...');
+      // Show status for AI enhancement
+      if (USE_AI_ENHANCEMENT) {
+        summaryLine.textContent = '🤖 Đang cải thiện kết quả với AI...';
+        setStatus('progress', 'Đang phân tích và làm đẹp kết quả...');
       }
-      
-      // Beautify result with Gemini if enabled
-      const beautifiedResult = await beautifyWithGemini(result);
+
+      // Enhance result with AI if enabled
+      const beautifiedResult = await enhanceResultWithAI(result);
       renderTrustResult(beautifiedResult);
       logDebug('Pipeline completed', beautifiedResult);
     } else if (result.status === 'failed') {
@@ -378,10 +388,10 @@ function renderTrustResult(result) {
   const verdict = result.verdict || 'needs-review';
   setVerdictBadge(verdict);
   
-  // Display Gemini enhancement status
-  if (result._gemini_enhanced) {
+  // Display AI enhancement status
+  if (result._ai_enhanced) {
     scoreLine.textContent = `Điểm tin cậy: ${result.trust_score ?? '--'}/100 ✨`;
-    scoreLine.title = 'Kết quả đã được làm sạch bởi Gemini AI';
+    scoreLine.title = 'Kết quả đã được cải thiện bởi AI';
   } else {
     scoreLine.textContent = `Điểm tin cậy: ${result.trust_score ?? '--'}/100`;
   }
@@ -422,14 +432,14 @@ function renderTrustResult(result) {
     flagsWrap.style.display = 'none';
   }
   
-  // Display action suggestion from Gemini if available
+  // Display action suggestion from AI if available
   if (result.action_suggestion) {
     displayActionSuggestion(result.action_suggestion);
   }
   
-  // Update status based on Gemini enhancement
-  if (result._gemini_enhanced) {
-    setStatus('success', 'Đã phân tích xong với Gemini AI ✨');
+  // Update status based on AI enhancement
+  if (result._ai_enhanced) {
+    setStatus('success', '✅ Hoàn tất phân tích với AI ✨');
   } else {
     setStatus('success', 'Đã nhận kết quả từ TrustCheck.');
   }

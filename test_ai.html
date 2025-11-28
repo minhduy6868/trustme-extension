@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test OpenRouter AI Enhancement</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .info {
+            background: #e8f4f8;
+            border: 1px solid #4a90e2;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        button {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            white-space: pre-wrap;
+            border-left: 4px solid #4a90e2;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            background: #fff5f5;
+            border-left-color: #e53e3e;
+            color: #c53030;
+        }
+        .success {
+            background: #f0fff4;
+            border-left-color: #38a169;
+            color: #2d7e32;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        .input-group textarea {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .input-group textarea:focus {
+            border-color: #4a90e2;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Test OpenRouter AI Enhancement</h1>
+        <p class="subtitle">Kiểm tra tính năng làm đẹp kết quả với Grok AI miễn phí</p>
+        
+        <div class="info">
+            <strong>🔑 API:</strong> OpenRouter (sk-or-v1-ed27ae6...)<br>
+            <strong>🤖 Model:</strong> x-ai/grok-4.1-fast:free (MIỄN PHÍ)<br>
+            <strong>⚡ Features:</strong> Reasoning enabled, Temperature 0.3
+        </div>
+
+        <div class="input-group">
+            <label for="testInput">📊 Test Input (dữ liệu mô phỏng từ TrustCheck):</label>
+            <textarea id="testInput">Trust Score: 67/100
+Verdict: needs-review
+Summary: semantic similarity 0.82; authority score 35; trusted domain: vnexpress.net; suspicious patterns detected
+Flags: authority, content, semantic-medium, single-source, temporal</textarea>
+        </div>
+
+        <button onclick="testAIEnhancement()">🚀 Test AI Enhancement</button>
+        <button onclick="testSimple()">💬 Test Simple Chat</button>
+        <button onclick="clearOutput()">🗑️ Clear</button>
+
+        <div id="output" class="output" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_KEY = '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';
+        const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+        function showOutput(content, isError = false) {
+            const output = document.getElementById('output');
+            output.style.display = 'block';
+            output.className = 'output ' + (isError ? 'error' : 'success');
+            output.textContent = content;
+        }
+
+        function clearOutput() {
+            const output = document.getElementById('output');
+            output.style.display = 'none';
+        }
+
+        async function testSimple() {
+            showOutput('🔄 Testing simple chat with Grok AI...');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + API_KEY
+                    },
+                    body: JSON.stringify({
+                        model: 'x-ai/grok-4.1-fast:free',
+                        messages: [
+                            {role: 'system', content: 'Bạn là trợ lý AI thân thiện, trả lời bằng tiếng Việt.'},
+                            {role: 'user', content: 'Xin chào! Bạn có thể giúp tôi kiểm tra tin tức không?'}
+                        ],
+                        stream: false,
+                        temperature: 0.3,
+                        extra_body: {
+                            reasoning: { enabled: true }
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    showOutput(`❌ ERROR:\n\nHTTP ${response.status}:\n${errorText}`, true);
+                    return;
+                }
+
+                const data = await response.json();
+                const content = data.choices?.[0]?.message?.content || 'No content received';
+                showOutput(`✅ SUCCESS - Simple Chat:\n\n${content}`);
+
+            } catch (error) {
+                showOutput(`❌ NETWORK ERROR:\n\n${error.message}`, true);
+            }
+        }
+
+        async function testAIEnhancement() {
+            const inputText = document.getElementById('testInput').value;
+            showOutput('🔄 Testing AI enhancement (như extension)...');
+
+            // Mô phỏng chính xác prompt từ extension
+            const flagsExplanation = ['Độ uy tín của nguồn chưa cao', 'Nội dung có vấn đề', 'Độ tương đồng ngữ nghĩa trung bình', 'Chỉ có một nguồn duy nhất', 'Thông tin lỗi thời hoặc không chính xác về thời gian'];
+            
+            const prompt = `Bạn là chuyên gia kiểm chứng tin tức. Hãy chuyển kết quả kỹ thuật thành ngôn ngữ dễ hiểu.
+
+Dữ liệu:
+- Điểm: 67/100
+- Kết luận: Cần kiểm tra
+- Chi tiết: semantic similarity 0.82; authority score 35; trusted domain: vnexpress.net; suspicious patterns detected
+- Vấn đề: ${flagsExplanation.join(', ')}
+
+Trả về JSON:
+{
+  "summary": "Tóm tắt ngắn gọn (1-2 câu)",
+  "detailed_analysis": "Phân tích chi tiết dễ hiểu",
+  "flags": ["Cảnh báo dễ hiểu"],
+  "action_suggestion": "Gợi ý cho người dùng"
+}`;
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + API_KEY
+                    },
+                    body: JSON.stringify({
+                        model: 'x-ai/grok-4.1-fast:free',
+                        messages: [
+                            {role: 'system', content: 'Bạn là chuyên gia kiểm chứng tin tức, trả lời bằng tiếng Việt.'},
+                            {role: 'user', content: prompt}
+                        ],
+                        stream: false,
+                        temperature: 0.3,
+                        extra_body: {
+                            reasoning: { enabled: true }
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    showOutput(`❌ ERROR:\n\nHTTP ${response.status}:\n${errorText}`, true);
+                    return;
+                }
+
+                const data = await response.json();
+                const content = data.choices?.[0]?.message?.content || 'No content received';
+                
+                // Thử parse JSON
+                try {
+                    let jsonMatch = content.match(/\{[\s\S]*\}/);
+                    if (!jsonMatch) {
+                        const codeBlockMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+                        if (codeBlockMatch) {
+                            jsonMatch = [codeBlockMatch[1]];
+                        }
+                    }
+                    
+                    if (jsonMatch) {
+                        const parsed = JSON.parse(jsonMatch[0]);
+                        showOutput(`✅ SUCCESS - AI Enhanced Result:\n\n📝 SUMMARY:\n${parsed.summary}\n\n📊 DETAILED ANALYSIS:\n${parsed.detailed_analysis}\n\n⚠️ FLAGS:\n${parsed.flags?.join('\n') || 'Không có'}\n\n💡 ACTION SUGGESTION:\n${parsed.action_suggestion}\n\n---\nRAW RESPONSE:\n${content}`);
+                    } else {
+                        showOutput(`⚠️ NO JSON FOUND:\n\n${content}`);
+                    }
+                } catch (parseError) {
+                    showOutput(`⚠️ JSON PARSE ERROR:\n\n${content}`);
+                }
+
+            } catch (error) {
+                showOutput(`❌ NETWORK ERROR:\n\n${error.message}`, true);
+            }
+        }
+    </script>
+</body>
+</html>
