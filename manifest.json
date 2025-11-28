@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "TrustMeBro Data Collector",
-  "version": "1.0",
-  "description": "Thu thập nhanh dữ liệu bài viết và bài đăng dưới dạng JSON",
-  "permissions": ["activeTab", "tabs"],
-  "host_permissions": ["*://localhost/*"],
+  "name": "TrustMeBro Fact Checker",
+  "version": "2.0",
+  "description": "Phân tích độ tin cậy của nội dung với AI và giao diện thân thiện",
+  "permissions": ["activeTab", "tabs", "storage"],
+  "host_permissions": ["*://localhost/*", "https://generativelanguage.googleapis.com/*"],
   "background": {
     "service_worker": "background.js"
   },

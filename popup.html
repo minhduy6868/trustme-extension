@@ -10,10 +10,14 @@
         --accent: #0ea5e9;
         --accent-strong: #2563eb;
         --accent-soft: #e0f2fe;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
         --muted: #475569;
         --card: #ffffff;
         --border: #e2e8f0;
-        --shadow: 0 16px 50px rgba(15, 23, 42, 0.18);
+        --shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+        --shadow-lg: 0 25px 70px rgba(15, 23, 42, 0.2);
       }
 
       * {
@@ -22,29 +26,31 @@
 
       body {
         margin: 0;
-        padding: 14px;
-        min-width: 360px;
+        padding: 16px;
+        min-width: 380px;
         color: #0f172a;
         font-family: "Space Grotesk", "DM Sans", system-ui, -apple-system,
           "Segoe UI", sans-serif;
         background: radial-gradient(
             120% 140% at 15% 20%,
-            #d7f4ff 0%,
-            rgba(231, 246, 255, 0.6) 40%,
+            rgba(14, 165, 233, 0.08) 0%,
+            rgba(37, 99, 235, 0.04) 40%,
             rgba(255, 255, 255, 0) 70%
           ),
-          linear-gradient(135deg, #f8fafc 0%, #f7f2ff 100%);
+          linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        min-height: 500px;
       }
 
       .shell {
         position: relative;
         overflow: hidden;
-        background: var(--card);
-        border: 1px solid rgba(226, 232, 240, 0.8);
-        border-radius: 18px;
-        padding: 16px;
-        box-shadow: var(--shadow);
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(14, 165, 233, 0.15);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: var(--shadow-lg);
         isolation: isolate;
+        backdrop-filter: blur(20px);
       }
 
       .shell::after {
@@ -71,8 +77,8 @@
       .hero {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        margin-bottom: 12px;
+        gap: 12px;
+        margin-bottom: 20px;
       }
 
       .hero__badge {
@@ -112,15 +118,18 @@
       }
 
       .trust-icon {
-        width: 38px;
-        height: 38px;
-        display: grid;
-        place-items: center;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #22c55e, #0ea5e9);
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.8);
         color: #fff;
         font-weight: 700;
-        box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
+        box-shadow: 0 8px 20px rgba(14, 165, 233, 0.2);
+        padding: 6px;
+        border: 1px solid rgba(14, 165, 233, 0.15);
       }
 
       .trust-title {
@@ -132,36 +141,47 @@
       .actions {
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        margin-bottom: 12px;
+        gap: 12px;
+        margin-bottom: 20px;
       }
 
       button {
         border: none;
-        border-radius: 12px;
-        padding: 12px;
+        border-radius: 14px;
+        padding: 14px 18px;
         font-weight: 600;
         font-size: 14px;
         cursor: pointer;
-        transition: transform 120ms ease, box-shadow 120ms ease,
-          opacity 120ms ease;
+        transition: all 200ms ease;
+        position: relative;
+        overflow: hidden;
       }
 
       .btn-primary {
         background: linear-gradient(135deg, var(--accent), var(--accent-strong));
         color: #fff;
-        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.3);
+        box-shadow: 0 16px 32px rgba(37, 99, 235, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
       }
 
       .btn-secondary {
-        background: rgba(14, 165, 233, 0.08);
-        color: #075985;
-        border: 1px solid rgba(14, 165, 233, 0.35);
+        background: rgba(14, 165, 233, 0.06);
+        color: var(--accent-strong);
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.1);
       }
 
       button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.18);
+      }
+      
+      button:active:not(:disabled) {
         transform: translateY(-1px);
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.12);
       }
 
       button:disabled {
@@ -173,13 +193,20 @@
       .toggle {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 10px 12px;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        background: #f8fafc;
+        gap: 12px;
+        padding: 12px 16px;
+        border: 1px solid rgba(226, 232, 240, 0.4);
+        border-radius: 14px;
+        background: linear-gradient(135deg, #f8fafc, #ffffff);
         font-size: 13px;
         color: #0f172a;
+        transition: all 200ms ease;
+        cursor: pointer;
+      }
+      
+      .toggle:hover {
+        border-color: rgba(14, 165, 233, 0.3);
+        background: linear-gradient(135deg, #ffffff, #f8fafc);
       }
 
       .toggle input {
@@ -217,20 +244,23 @@
       }
 
       .card {
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 12px;
-        background: #ffffffee;
-        margin-bottom: 12px;
+        border: 1px solid rgba(226, 232, 240, 0.5);
+        border-radius: 16px;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.8);
+        margin-bottom: 16px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+        backdrop-filter: blur(10px);
       }
 
       .trust-card {
         background: linear-gradient(
           140deg,
-          rgba(14, 165, 233, 0.08),
-          rgba(16, 185, 129, 0.08)
+          rgba(14, 165, 233, 0.05),
+          rgba(16, 185, 129, 0.05)
         );
-        border: 1px solid rgba(14, 165, 233, 0.3);
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        box-shadow: 0 8px 20px rgba(14, 165, 233, 0.1);
       }
 
       .trust-card__top {
@@ -253,53 +283,152 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 8px 12px;
+        padding: 9px 14px;
         border-radius: 999px;
-        font-weight: 700;
-        font-size: 12px;
+        font-weight: 600;
+        font-size: 13px;
         color: #0f172a;
+        letter-spacing: 0.01em;
       }
 
       .pill.verified {
-        background: #ecfdf3;
-        color: #166534;
-        border: 1px solid #bbf7d0;
+        background: linear-gradient(135deg, #ecfdf3, #d1fae5);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
       }
 
       .pill.needs-review {
-        background: #fff7ed;
-        color: #9a3412;
-        border: 1px solid #fed7aa;
+        background: linear-gradient(135deg, #fff7ed, #fed7aa);
+        color: var(--warning);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
       }
 
       .pill.likely-false {
-        background: #fef2f2;
-        color: #b91c1c;
-        border: 1px solid #fecdd3;
+        background: linear-gradient(135deg, #fef2f2, #fecdd3);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
       }
 
       .pill.processing {
-        background: #eef2ff;
-        color: #312e81;
-        border: 1px solid #c7d2fe;
+        background: linear-gradient(135deg, #eef2ff, #dbeafe);
+        color: var(--accent-strong);
+        border: 1px solid rgba(37, 99, 235, 0.3);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
       }
 
       #scoreLine {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 12px;
-        border-radius: 12px;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 14px;
         background: linear-gradient(135deg, var(--accent), var(--accent-strong));
         color: #fff;
         font-weight: 700;
-        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+        font-size: 14px;
+        box-shadow: 0 12px 28px rgba(37, 99, 235, 0.3);
+        letter-spacing: 0.02em;
       }
 
       #summaryLine {
         color: #0f172a;
-        line-height: 1.4;
+        line-height: 1.5;
+        font-weight: 500;
+        max-height: 120px;
+        overflow-y: auto;
+        padding: 8px 0;
+      }
+      
+      .ai-badge {
+        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+        color: white !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      }
+      
+      /* Trust score animation and effects */
+      @keyframes trustPulse {
+        0%, 100% {
+          box-shadow: 0 12px 28px rgba(37, 99, 235, 0.3);
+        }
+        50% {
+          box-shadow: 0 12px 40px rgba(37, 99, 235, 0.5);
+        }
+      }
+      
+      #scoreLine {
+        animation: trustPulse 2s ease-in-out infinite;
+      }
+      
+      /* Warning indicator for low trust scores */
+      .trust-card.warning {
+        animation: scoreWarning 1.5s ease-in-out infinite;
+      }
+      
+      @keyframes scoreWarning {
+        0%, 100% {
+          border-color: rgba(239, 68, 68, 0.3);
+          box-shadow: 0 8px 20px rgba(239, 68, 68, 0.08);
+        }
+        50% {
+          border-color: rgba(239, 68, 68, 0.5);
+          box-shadow: 0 8px 20px rgba(239, 68, 68, 0.15);
+        }
+      }
+      
+      .confidence-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: rgba(14, 165, 233, 0.1);
+        color: var(--accent-strong);
+      }
+      
+      .trust-details {
+        margin-top: 12px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 10px;
+        border: 1px solid rgba(14, 165, 233, 0.15);
+      }
+      
+      .trust-details summary {
+        cursor: pointer;
         font-weight: 600;
+        color: var(--accent-strong);
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      
+      .trust-details summary::-webkit-details-marker {
+        display: none;
+      }
+      
+      .trust-details[open] summary::after {
+        transform: rotate(90deg);
+      }
+      
+      .trust-details summary::after {
+        content: "▶";
+        transition: transform 0.2s ease;
+        font-size: 10px;
+      }
+      
+      .analysis-content {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(14, 165, 233, 0.1);
+        font-size: 13px;
+        line-height: 1.4;
+        color: #475569;
       }
 
       .flags-wrap {
@@ -337,29 +466,33 @@
       }
 
       .status {
-        padding: 10px 12px;
-        border-radius: 12px;
+        padding: 12px 16px;
+        border-radius: 14px;
         border: 1px solid var(--border);
         background: #f8fafc;
         font-size: 13px;
+        font-weight: 500;
       }
 
       .status--success {
-        border-color: #86efac;
-        background: #ecfdf3;
-        color: #166534;
+        border-color: rgba(16, 185, 129, 0.3);
+        background: linear-gradient(135deg, #ecfdf3, #d1fae5);
+        color: var(--success);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
       }
 
       .status--error {
-        border-color: #fecdd3;
-        background: #fff1f2;
-        color: #b91c1c;
+        border-color: rgba(239, 68, 68, 0.3);
+        background: linear-gradient(135deg, #fff1f2, #fecdd3);
+        color: var(--danger);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
       }
 
       .status--progress {
-        border-color: #bfdbfe;
-        background: #eef2ff;
-        color: #1d4ed8;
+        border-color: rgba(37, 99, 235, 0.3);
+        background: linear-gradient(135deg, #eef2ff, #dbeafe);
+        color: var(--accent-strong);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
       }
 
       .status--neutral {
@@ -374,14 +507,21 @@
       .info-grid {
         display: grid;
         grid-template-columns: 1fr;
-        gap: 8px;
+        gap: 10px;
       }
 
       .info-item {
-        padding: 10px;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        background: #f8fafc;
+        padding: 12px;
+        border: 1px solid rgba(226, 232, 240, 0.4);
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f8fafc, #ffffff);
+        transition: all 200ms ease;
+      }
+      
+      .info-item:hover {
+        border-color: rgba(14, 165, 233, 0.3);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.1);
       }
 
       .info-label {
@@ -404,24 +544,29 @@
       <header class="hero">
         <div class="hero__badge">TrustMeBro</div>
         <div class="hero__heading">
-          <h1>TrustCheck</h1>
-          <p>Thu thập nội dung và gửi đánh giá độ tin cậy chỉ với một cú nhấp.</p>
+          <h1>TrustCheck AI</h1>
+          <p>Phân tích độ tin cậy nội dung bằng trí tuệ nhân tạo tiên tiến</p>
         </div>
         <div class="hero__trust">
-          <div class="trust-icon">✓</div>
+          <div class="trust-icon">
+            <img src="icons/trust_check_logo-removebg-preview.png" alt="TrustCheck" style="width: 30px; height: 30px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(14, 165, 233, 0.3));">
+          </div>
           <div>
-            <div class="trust-title">TrustCheck sẵn sàng</div>
+            <div class="trust-title">AI sẵn sàng phân tích</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Công nghệ phân tích thông minh</div>
           </div>
         </div>
       </header>
 
       <section class="actions">
-        <button id="runNowBtn" class="btn-primary">Phân tích &amp; chấm điểm</button>
-        <button id="checkBtn" class="btn-secondary">Chỉ thu thập dữ liệu</button>
+        <button id="runNowBtn" class="btn-primary">
+          <img src="icons/trust_check_logo-removebg-preview.png" alt="" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; filter: brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,0.1));">
+          Phân tích bằng AI
+        </button>
         <label class="toggle">
-          <input type="checkbox" id="autoCheckToggle" />
+          <input type="checkbox" id="autoCheckToggle" checked />
           <span class="toggle__control" aria-hidden="true"></span>
-          <span class="toggle__label">Tự gửi TrustCheck sau khi thu thập</span>
+          <span class="toggle__label">Tự động phân tích sau khi thu thập</span>
         </label>
       </section>
 
@@ -429,12 +574,21 @@
         <div class="trust-card__top">
           <div id="verdictBadge" class="pill processing">Đang xử lý...</div>
           <div class="trust-card__meta">
-            <div id="scoreLine">Trust score: --</div>
-            <div id="summaryLine"></div>
+            <div id="scoreLine">Điểm tin cậy: --</div>
           </div>
         </div>
-        <div class="flags-wrap">
-          <div class="flags-label">Tín hiệu phát hiện</div>
+        
+        <div id="summaryLine"></div>
+        
+        <details class="trust-details" id="trustDetails">
+          <summary>Xem phân tích chi tiết</summary>
+          <div class="analysis-content" id="analysisContent">
+            Đang tải...
+          </div>
+        </details>
+        
+        <div class="flags-wrap" id="flagsWrap">
+          <div class="flags-label">Các vấn đề được phát hiện</div>
           <ul id="flagsList"></ul>
         </div>
       </section>
