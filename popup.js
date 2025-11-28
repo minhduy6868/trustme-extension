@@ -18,8 +18,8 @@ const infoUrl = document.getElementById('infoUrl');
 let API_BASE = 'http://localhost:8001';
 let GEMINI_API_KEY = 'AIzaSyDQpzhKGz1wBYS2T-jh5F4XG5xHl5MncpU';
 let GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-let USE_LOCAL_PRIMARY = true;
-let USE_GEMINI_FOR_FORMATTING = true;
+let USE_GEMINI_PRIMARY = true;
+let FALLBACK_TO_LOCAL = true;
 
 init();
 
@@ -43,11 +43,11 @@ async function loadConfig() {
       if (cfg.GEMINI_API_URL) {
         GEMINI_API_URL = cfg.GEMINI_API_URL;
       }
-      if (cfg.USE_LOCAL_PRIMARY !== undefined) {
-        USE_LOCAL_PRIMARY = cfg.USE_LOCAL_PRIMARY;
+      if (cfg.USE_GEMINI_PRIMARY !== undefined) {
+        USE_GEMINI_PRIMARY = cfg.USE_GEMINI_PRIMARY;
       }
-      if (cfg.USE_GEMINI_FOR_FORMATTING !== undefined) {
-        USE_GEMINI_FOR_FORMATTING = cfg.USE_GEMINI_FOR_FORMATTING;
+      if (cfg.FALLBACK_TO_LOCAL !== undefined) {
+        FALLBACK_TO_LOCAL = cfg.FALLBACK_TO_LOCAL;
       }
       logDebug('Loaded full config:', cfg);
     } else {
@@ -155,26 +155,38 @@ async function submitToTrustCheck(data) {
 
   trustSummary.hidden = false;
   setVerdictBadge('processing');
-  summaryLine.textContent = 'Đang phân tích với mô hình cục bộ...';
-  setStatus('progress', 'Đang phân tích nội dung bằng mô hình AI cục bộ...');
+  summaryLine.textContent = 'Đang phân tích với AI...';
+  setStatus('progress', 'Đang phân tích nội dung bằng trí tuệ nhân tạo...');
 
   try {
-    if (USE_LOCAL_PRIMARY) {
-      // Use local model as primary
-      await submitToLocalModel(data);
-    } else {
-      // Fallback to Gemini only (not recommended)
+    if (USE_GEMINI_PRIMARY) {
+      // Try Gemini API first
       const geminiResult = await analyzeWithGemini(data);
+      
       if (geminiResult) {
         renderGeminiResult(geminiResult);
-        setStatus('success', 'Phân tích hoàn tất');
-      } else {
-        renderError('Không thể phân tích nội dung');
+        setStatus('success', 'Phân tích hoàn tất bằng AI');
+        return;
       }
+      
+      if (FALLBACK_TO_LOCAL) {
+        logDebug('Gemini failed, falling back to local model');
+        await submitToLocalModel(data);
+      } else {
+        renderError('Không thể kết nối với Gemini AI');
+      }
+    } else {
+      // Use local model directly
+      await submitToLocalModel(data);
     }
+    
   } catch (err) {
     logDebug('Analysis failed:', err);
-    renderError('Không thể phân tích nội dung: ' + err.message);
+    if (FALLBACK_TO_LOCAL && USE_GEMINI_PRIMARY) {
+      await submitToLocalModel(data);
+    } else {
+      renderError('Không thể phân tích nội dung: ' + err.message);
+    }
   }
 }
 
@@ -252,66 +264,6 @@ Trả về kết quả bằng tiếng Việt dưới dạng JSON, KHÔNG dùng e
   }
 }
 
-async function beautifyWithGemini(localResult) {
-  if (!USE_GEMINI_FOR_FORMATTING) {
-    return localResult;
-  }
-
-  const prompt = `Hãy viết lại phần summary và detailed_analysis dưới đây thành tiếng Việt tự nhiên, dễ hiểu hơn. Giữ nguyên JSON structure:
-
-Summary hiện tại: ${localResult.summary || ''}
-Detailed analysis hiện tại: ${localResult.detailed_analysis || ''}
-Verdict: ${localResult.verdict}
-Trust score: ${localResult.trust_score}
-
-Trả về JSON với các field:
-{
-  "summary": "Viết lại summary thành tự nhiên hơn",
-  "detailed_analysis": "Viết lại analysis thành tự nhiên hơn"
-}`;
-
-  try {
-    const response = await fetch(GEMINI_API_URL, {
-      method: 'POST',
-      headers: {
-        'x-goog-api-key': GEMINI_API_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }]
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (!text) {
-      return localResult;
-    }
-
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const beautified = JSON.parse(jsonMatch[0]);
-      return {
-        ...localResult,
-        summary: beautified.summary || localResult.summary,
-        detailed_analysis: beautified.detailed_analysis || localResult.detailed_analysis
-      };
-    }
-    
-    return localResult;
-  } catch (error) {
-    logDebug('Gemini beautification failed:', error);
-    return localResult;
-  }
-}
-
 async function submitToLocalModel(data) {
   summaryLine.textContent = 'Đang gửi tới mô hình cục bộ...';
   
@@ -359,10 +311,8 @@ async function pollResult(jobId, attempt) {
     }
     const result = await resp.json();
     if (result.status === 'completed') {
-      // Beautify result with Gemini if enabled
-      const beautifiedResult = await beautifyWithGemini(result);
-      renderTrustResult(beautifiedResult);
-      logDebug('Pipeline completed', beautifiedResult);
+      renderTrustResult(result);
+      logDebug('Pipeline completed', result);
     } else if (result.status === 'failed') {
       renderError(result.error || 'Phân tích thất bại');
       logDebug('Pipeline failed', result);
