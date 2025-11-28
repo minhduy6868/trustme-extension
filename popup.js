@@ -16,9 +16,8 @@ const infoPlatform = document.getElementById('infoPlatform');
 const infoUrl = document.getElementById('infoUrl');
 
 let API_BASE = 'http://localhost:8001';
-let GEMINI_API_KEY = 'AIzaSyDQpzhKGz1wBYS2T-jh5F4XG5xHl5MncpU';
-let GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-let USE_LOCAL_PRIMARY = true;
+let GEMINI_API_KEY = 'AIzaSyA7hoT0G1-GKVycNqFYVKNK855fDNGUDkY';
+let GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 let USE_GEMINI_FOR_FORMATTING = true;
 
 init();
@@ -42,9 +41,6 @@ async function loadConfig() {
       }
       if (cfg.GEMINI_API_URL) {
         GEMINI_API_URL = cfg.GEMINI_API_URL;
-      }
-      if (cfg.USE_LOCAL_PRIMARY !== undefined) {
-        USE_LOCAL_PRIMARY = cfg.USE_LOCAL_PRIMARY;
       }
       if (cfg.USE_GEMINI_FOR_FORMATTING !== undefined) {
         USE_GEMINI_FOR_FORMATTING = cfg.USE_GEMINI_FOR_FORMATTING;
@@ -159,118 +155,83 @@ async function submitToTrustCheck(data) {
   setStatus('progress', 'Đang phân tích nội dung bằng mô hình AI cục bộ...');
 
   try {
-    if (USE_LOCAL_PRIMARY) {
-      // Use local model as primary
-      await submitToLocalModel(data);
-    } else {
-      // Fallback to Gemini only (not recommended)
-      const geminiResult = await analyzeWithGemini(data);
-      if (geminiResult) {
-        renderGeminiResult(geminiResult);
-        setStatus('success', 'Phân tích hoàn tất');
-      } else {
-        renderError('Không thể phân tích nội dung');
-      }
-    }
+    await submitToLocalModel(data);
   } catch (err) {
     logDebug('Analysis failed:', err);
     renderError('Không thể phân tích nội dung: ' + err.message);
   }
 }
 
-async function analyzeWithGemini(data) {
-  const prompt = `Bạn là một chuyên gia phân tích tin tức và thông tin. Hãy đánh giá độ tin cậy của nội dung sau bằng tiếng Việt:
-
-📰 THÔNG TIN BÀI VIẾT:
-- Tiêu đề: ${data.title || 'Không có tiêu đề'}
-- Tác giả: ${data.author || 'Không rõ tác giả'}  
-- Nguồn: ${data.url || 'Không có nguồn'}
-- Nội dung: ${data.article}
-
-🎯 YÊU CẦU PHÂN TÍCH:
-Hãy đánh giá dựa trên các tiêu chí sau:
-1. Tính chính xác của thông tin
-2. Nguồn gốc và độ uy tín
-3. Ngôn ngữ và cách trình bày
-4. Tính khách quan
-5. Bằng chứng hỗ trợ
-
-Trả về kết quả bằng tiếng Việt dưới dạng JSON, KHÔNG dùng emoji, với format chính xác này:
-{
-  "trust_score": (số từ 0-100),
-  "verdict": "verified" hoặc "needs-review" hoặc "likely-false",
-  "summary": "Tóm tắt 1-2 câu ngắn gọn bằng tiếng Việt",
-  "detailed_analysis": "Phân tích chi tiết 3-4 đoạn, bao gồm điểm mạnh và điểm yếu",
-  "flags": ["Danh sách cảnh báo bằng tiếng Việt nếu có"],
-  "confidence": "high" hoặc "medium" hoặc "low"
-}`;
-
-  try {
-    const response = await fetch(GEMINI_API_URL, {
-      method: 'POST',
-      headers: {
-        'x-goog-api-key': GEMINI_API_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }]
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (!text) {
-      throw new Error('No response from Gemini');
-    }
-
-    // Parse JSON response
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-    
-    // If no JSON found, create structured response
-    return {
-      trust_score: 50,
-      verdict: 'needs-review',
-      summary: text.slice(0, 200) + '...',
-      detailed_analysis: text,
-      flags: [],
-      confidence: 'medium'
-    };
-    
-  } catch (error) {
-    logDebug('Gemini API failed:', error);
-    return null;
-  }
-}
-
 async function beautifyWithGemini(localResult) {
   if (!USE_GEMINI_FOR_FORMATTING) {
+    logDebug('Gemini beautification disabled');
     return localResult;
   }
 
-  const prompt = `Hãy viết lại phần summary và detailed_analysis dưới đây thành tiếng Việt tự nhiên, dễ hiểu hơn. Giữ nguyên JSON structure:
+  logDebug('Starting Gemini beautification...', localResult);
 
-Summary hiện tại: ${localResult.summary || ''}
-Detailed analysis hiện tại: ${localResult.detailed_analysis || ''}
-Verdict: ${localResult.verdict}
-Trust score: ${localResult.trust_score}
+  // Convert technical flags to readable Vietnamese
+  const flagsExplanation = (localResult.flags || []).map(flag => {
+    const flagMap = {
+      'ai': 'Có dấu hiệu nội dung AI tạo ra',
+      'authority': 'Độ uy tín của nguồn chưa cao',
+      'content': 'Nội dung có vấn đề',
+      'donation': 'Có yêu cầu quyên góp đáng ngờ',
+      'event': 'Sự kiện chưa được xác minh',
+      'fact-check': 'Cần kiểm chứng thông tin',
+      'media': 'Hình ảnh/video có vấn đề',
+      'official': 'Không phải nguồn chính thức',
+      'safety': 'Có nguy cơ an toàn',
+      'semantic-medium': 'Độ tương đồng ngữ nghĩa trung bình',
+      'semantic-low': 'Độ tương đồng ngữ nghĩa thấp',
+      'signals': 'Có nhiều dấu hiệu đáng ngờ',
+      'single-source': 'Chỉ có một nguồn duy nhất',
+      'spam-behavior': 'Có hành vi spam',
+      'temporal': 'Thông tin lỗi thời hoặc không chính xác về thời gian',
+      'translation': 'Bản dịch có vấn đề',
+      'typosquatting': 'Domain giả mạo',
+      'uniqueness': 'Nội dung thiếu tính độc đáo'
+    };
+    return flagMap[flag] || flag;
+  });
 
-Trả về JSON với các field:
+  const prompt = `Bạn là chuyên gia phân tích tin tức. Hãy VIẾT LẠI kết quả phân tích dưới đây thành ngôn ngữ TỰ NHIÊN, DỄ HIỂU cho người đọc thông thường.
+
+📊 DỮ LIỆU PHÂN TÍCH:
+Điểm tin cậy: ${localResult.trust_score}/100
+Kết luận: ${localResult.verdict === 'verified' ? 'Đáng tin cậy' : localResult.verdict === 'likely-false' ? 'Nghi ngờ' : 'Cần thận trọng'}
+
+Thông tin kỹ thuật:
+${localResult.summary || ''}
+
+Các vấn đề phát hiện:
+${flagsExplanation.join('\n')}
+
+Thành phần đánh giá:
+${JSON.stringify(localResult.components || {}, null, 2)}
+
+🎯 YÊU CẦU VIẾT LẠI:
+1. SUMMARY: Viết 2-3 câu TỰ NHIÊN giải thích điểm tin cậy và kết luận
+2. DETAILED_ANALYSIS: Viết 4-5 đoạn PHÂN TÍCH CHI TIẾT:
+   - Đoạn 1: Tổng quan về nguồn tin
+   - Đoạn 2: Điểm mạnh (nếu có)
+   - Đoạn 3: Điểm yếu và vấn đề phát hiện
+   - Đoạn 4: Giải thích tại sao đạt điểm này
+   - Đoạn 5: Đánh giá tổng thể
+3. FLAGS: Chuyển các cảnh báo kỹ thuật thành NGÔN NGỮ Dễ HIỂU
+4. ACTION_SUGGESTION: Đưa ra lời khuyên CỤ THỂ cho người đọc
+
+Trả về JSON (KHÔNG dùng markdown, chỉ JSON thuần):
 {
-  "summary": "Viết lại summary thành tự nhiên hơn",
-  "detailed_analysis": "Viết lại analysis thành tự nhiên hơn"
+  "summary": "Viết tóm tắt tự nhiên ở đây",
+  "detailed_analysis": "Viết phân tích chi tiết ở đây, dùng \\n\\n để ngắt đoạn",
+  "flags": ["Cảnh báo 1", "Cảnh báo 2"],
+  "action_suggestion": "Lời khuyên cụ thể cho người đọc"
 }`;
 
   try {
+    summaryLine.textContent = 'Đang làm sạch kết quả với Gemini AI...';
+    
     const response = await fetch(GEMINI_API_URL, {
       method: 'POST',
       headers: {
@@ -285,29 +246,60 @@ Trả về JSON với các field:
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      logDebug('Gemini API error:', response.status, errorText);
       throw new Error(`Gemini API error: ${response.status}`);
     }
 
     const result = await response.json();
+    logDebug('Gemini raw response:', result);
+    
     const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!text) {
+      logDebug('No text in Gemini response');
       return localResult;
     }
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    logDebug('Gemini response text:', text);
+
+    // Try to extract JSON from response
+    let jsonMatch = text.match(/\{[\s\S]*\}/);
+    
+    // If no JSON found, try to extract from markdown code block
+    if (!jsonMatch) {
+      const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+      if (codeBlockMatch) {
+        jsonMatch = [codeBlockMatch[1]];
+      }
+    }
+    
     if (jsonMatch) {
-      const beautified = JSON.parse(jsonMatch[0]);
-      return {
-        ...localResult,
-        summary: beautified.summary || localResult.summary,
-        detailed_analysis: beautified.detailed_analysis || localResult.detailed_analysis
-      };
+      try {
+        const beautified = JSON.parse(jsonMatch[0]);
+        logDebug('Gemini beautified result:', beautified);
+        
+        summaryLine.textContent = '';
+        
+        return {
+          ...localResult,
+          summary: beautified.summary || localResult.summary,
+          detailed_analysis: beautified.detailed_analysis || localResult.detailed_analysis,
+          flags: beautified.flags && beautified.flags.length > 0 ? beautified.flags : localResult.flags,
+          action_suggestion: beautified.action_suggestion || null,
+          _gemini_enhanced: true
+        };
+      } catch (parseError) {
+        logDebug('JSON parse error:', parseError, 'Raw:', jsonMatch[0]);
+      }
+    } else {
+      logDebug('No JSON found in Gemini response');
     }
     
     return localResult;
   } catch (error) {
     logDebug('Gemini beautification failed:', error);
+    summaryLine.textContent = '';
     return localResult;
   }
 }
@@ -359,6 +351,12 @@ async function pollResult(jobId, attempt) {
     }
     const result = await resp.json();
     if (result.status === 'completed') {
+      // Show status for Gemini enhancement
+      if (USE_GEMINI_FOR_FORMATTING) {
+        summaryLine.textContent = 'Đang làm sạch kết quả với Gemini AI...';
+        setStatus('progress', 'Đang làm sạch và phân tích kết quả bằng Gemini AI...');
+      }
+      
       // Beautify result with Gemini if enabled
       const beautifiedResult = await beautifyWithGemini(result);
       renderTrustResult(beautifiedResult);
@@ -379,7 +377,15 @@ function renderTrustResult(result) {
   trustSummary.hidden = false;
   const verdict = result.verdict || 'needs-review';
   setVerdictBadge(verdict);
-  scoreLine.textContent = `Điểm tin cậy: ${result.trust_score ?? '--'}/100`;
+  
+  // Display Gemini enhancement status
+  if (result._gemini_enhanced) {
+    scoreLine.textContent = `Điểm tin cậy: ${result.trust_score ?? '--'}/100 ✨`;
+    scoreLine.title = 'Kết quả đã được làm sạch bởi Gemini AI';
+  } else {
+    scoreLine.textContent = `Điểm tin cậy: ${result.trust_score ?? '--'}/100`;
+  }
+  
   summaryLine.innerHTML = formatSummaryText(result.summary || '');
   
   // Add warning effect for low trust scores
@@ -416,66 +422,44 @@ function renderTrustResult(result) {
     flagsWrap.style.display = 'none';
   }
   
-  setStatus('success', 'Đã nhận kết quả từ TrustCheck.');
+  // Display action suggestion from Gemini if available
+  if (result.action_suggestion) {
+    displayActionSuggestion(result.action_suggestion);
+  }
+  
+  // Update status based on Gemini enhancement
+  if (result._gemini_enhanced) {
+    setStatus('success', 'Đã phân tích xong với Gemini AI ✨');
+  } else {
+    setStatus('success', 'Đã nhận kết quả từ TrustCheck.');
+  }
 }
 
-function renderGeminiResult(result) {
-  trustSummary.hidden = false;
-  const verdict = result.verdict || 'needs-review';
-  setVerdictBadge(verdict);
+function displayActionSuggestion(suggestion) {
+  // Create or update action suggestion element
+  let actionDiv = document.getElementById('actionSuggestion');
   
-  // Score display with confidence
-  let scoreText = `Điểm tin cậy: ${result.trust_score ?? '--'}/100`;
-  if (result.confidence) {
-    const confidenceText = getConfidenceText(result.confidence);
-    scoreText += ` • ${confidenceText}`;
-  }
-  scoreLine.textContent = scoreText;
-  
-  // Add warning effect for low trust scores
-  const score = result.trust_score || 50;
-  if (score < 40) {
-    trustSummary.classList.add('warning');
-  } else {
-    trustSummary.classList.remove('warning');
-  }
-  
-  // Summary display
-  summaryLine.innerHTML = formatSummaryText(result.summary || 'Đã hoàn thành phân tích');
-  
-  // Detailed analysis in collapsible section
-  const analysisContent = document.getElementById('analysisContent');
-  const trustDetails = document.getElementById('trustDetails');
-  
-  if (result.detailed_analysis && result.detailed_analysis !== result.summary) {
-    analysisContent.innerHTML = formatSummaryText(result.detailed_analysis);
-    trustDetails.style.display = 'block';
-  } else {
-    trustDetails.style.display = 'none';
+  if (!actionDiv) {
+    actionDiv = document.createElement('div');
+    actionDiv.id = 'actionSuggestion';
+    actionDiv.className = 'action-suggestion';
+    actionDiv.style.cssText = `
+      margin-top: 12px;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 8px;
+      color: white;
+      font-size: 13px;
+      line-height: 1.6;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    `;
+    trustSummary.appendChild(actionDiv);
   }
   
-  // Flags display
-  const flagsWrap = document.getElementById('flagsWrap');
-  flagsList.innerHTML = '';
-  
-  if (result.flags && result.flags.length > 0) {
-    flagsWrap.style.display = 'block';
-    result.flags.forEach((flag) => {
-      const li = document.createElement('li');
-      li.textContent = flag;
-      flagsList.appendChild(li);
-    });
-  } else {
-    flagsWrap.style.display = 'none';
-  }
-  
-  // Add AI badge if not exists
-  if (!document.querySelector('.ai-badge')) {
-    const aiBadge = document.createElement('div');
-    aiBadge.className = 'pill ai-badge';
-    aiBadge.innerHTML = '<img src="icons/trust_check_logo-removebg-preview.png" style="width: 14px; height: 14px; margin-right: 4px; vertical-align: middle; filter: brightness(0) invert(1);" alt=""> Phân tích bởi AI';
-    trustSummary.appendChild(aiBadge);
-  }
+  actionDiv.innerHTML = `
+    <strong style="display: block; margin-bottom: 6px; font-size: 14px;">💡 Gợi ý hành động:</strong>
+    ${escapeHtml(suggestion)}
+  `;
 }
 
 function formatSummaryText(text) {
@@ -490,15 +474,6 @@ function formatSummaryText(text) {
     .replace(/Điểm mạnh:/g, '<strong style="color: #10b981;">Điểm mạnh:</strong>')
     .replace(/Điểm yếu:/g, '<strong style="color: #f59e0b;">Điểm yếu:</strong>')
     .replace(/Cảnh báo:/g, '<strong style="color: #ef4444;">Cảnh báo:</strong>');
-}
-
-function getConfidenceText(confidence) {
-  switch (confidence) {
-    case 'high': return 'Độ tin cậy cao';
-    case 'medium': return 'Độ tin cậy trung bình'; 
-    case 'low': return 'Độ tin cậy thấp';
-    default: return '';
-  }
 }
 
 function setVerdictBadge(verdict) {

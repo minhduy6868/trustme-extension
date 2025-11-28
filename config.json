@@ -1,7 +1,6 @@
 {
   "ENDPOINT_MODEL": "http://localhost:8001",
-  "GEMINI_API_KEY": "AIzaSyDQpzhKGz1wBYS2T-jh5F4XG5xHl5MncpU",
-  "GEMINI_API_URL": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-  "USE_LOCAL_PRIMARY": true,
+  "GEMINI_API_KEY": "AIzaSyA7hoT0G1-GKVycNqFYVKNK855fDNGUDkY",
+  "GEMINI_API_URL": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
   "USE_GEMINI_FOR_FORMATTING": true
 }

@@ -182,8 +182,8 @@
   }
 
   async function analyzeContentWithGemini(data) {
-    const GEMINI_API_KEY = 'AIzaSyDQpzhKGz1wBYS2T-jh5F4XG5xHl5MncpU';
-    const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+    const GEMINI_API_KEY = 'AIzaSyAflaTpn2I9zfgspyWF_aNGBZwM8Oin5Pc';
+    const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
     
     const prompt = `Phân tích độ tin cậy của nội dung này và trả về JSON:
 
